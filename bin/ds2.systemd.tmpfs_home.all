@@ -1,0 +1,51 @@
+#!/bin/sh
+set -Ceu;
+
+usage() { cat >&2 << EOF
+# usage: $0 unit_gen_dir configdir < /etc/passwd
+# generates tmpfs home units for each user in (stdin-fed) passwd file that has an entry in configdir/users.
+# unit_gen_dir is the generator directory to create systemd units in (see tmpfs_home_single_entry).
+EOF
+exit 1;
+}
+
+if test "$#" -ne 2; then usage; fi;
+unit_gen_dir="$1";
+c="$2";
+
+
+default_image_prefix="$(cat "$c/default_image_prefix")";
+
+
+
+fetch() {
+	if test -e "$1"; then cat "$1"; else echo "$2"; fi;
+}
+handle_user() {
+	_imageprefix="$(fetch "$1/image_prefix" "$default_image_prefix")";
+	_size="$(cat "$1/size")";
+
+	_image="$_imageprefix/$2";
+
+	# XXX: no extraopts implemented yet?
+	ds2.systemd.tmpfs_home.single_entry "$unit_gen_dir" "$_image" "$5" "$3" "$4" "$_size";
+}
+
+
+
+IFS=":";
+while read -r user pass uid gid comment home shell; do {
+	userconf="$c/users/$user";
+	if test -e "$userconf"; then {
+		handle_user "$userconf" "$user" "$uid" "$gid" "$home";
+	}; fi;
+
+	# XXX: do shell semantics in -u mode unset some of these in the next loop iteration,
+	# if some fields are not present in the read line?
+	# or do they retain their values from the previous iteration?
+	# for now we're only using user, uid, gid and home,
+	# but probably still best to sanity check our input anyway.
+	# otherwise a half-edited /etc/passwd would cause some rather screwy generated units.
+	unset user pass uid gid comment home shell;
+}; done;
+

@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu;
+
+if test "$#" -ne 3; then echo "# Usage: $0 normaldir earlydir latedir"; exit 1; fi;
+exec 0</etc/passwd;
+exec 2>/dev/kmsg;
+exec ds2.systemd.tmpfs_home.all "$2" /etc/pkg/ds2.systemd.tmpfs_home;
+
