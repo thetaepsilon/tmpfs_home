@@ -68,11 +68,11 @@ EOF
 
 test -e "$dropindir" || mkdir "$dropindir";
 cd "$dropindir";
-# XXX: while this seems a sane default,
-# maybe in future we should have a way to conditionally turn this off?
 cat >"$dropinname" <<EOF
 [Unit]
 RequiresMountsFor=${mountpoint}
+Requires=${servicename}
+After=${servicename}
 EOF
 
 
