@@ -46,7 +46,7 @@ check "${size:?}";
 
 extraopts="";
 if test -n "${mountopts:-}"; then {
-	extraopts=",${mountopts}";
+	extraopts="${mountopts},";
 }; fi;
 
 
@@ -82,7 +82,7 @@ What=tmpfs
 Type=tmpfs
 Where=${mountpoint}
 DirectoryMode=000
-Options=uid=${uid},gid=${gid},mode=0700,size=${size}${extraopts}
+Options=${extraopts}uid=${uid},gid=${gid},mode=0700,size=${size}
 TimeoutSec=0
 EOF
 
