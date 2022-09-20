@@ -28,12 +28,18 @@ exit 1;
 
 
 
+die() {
+	echo '#' "$@" >&2;
+	exit 1;
+}
+
+
+
 check() {
 	# all used cases of this are supposed to use ${var:?},
 	# so if we somehow get this far something is quite broken.
 	test -n "$1" || {
-		echo "# a required env var was blank" >&2;
-		exit 1;
+		die "a required env var was blank";
 	}
 }
 
