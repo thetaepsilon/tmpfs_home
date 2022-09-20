@@ -4,32 +4,52 @@ set -Ceu;
 # if a conflict occurs then the sysadmin has goofed and that's their problem.
 
 usage() { cat >&2 << EOF
-# usage: $0 unit_gen_dir srcdir mountpoint uid gid size [opts]
+# usage: /* set env vars, see below */  $0
 # creates the mount and service units for a single tmpfs home in the given output dir.
 # a tmpfs mount unit is generated for mountpoint with the uid/gid set as specified,
 # mode 700, which will depend on a unit file doing the actual syncing from srcdir.
 # additionally, user@\$uid (the systemd user manager) will be made to RequiresMountsFor=\$home,
 # which on most systemd based systems will activate the mount point at login time.
-# opts may specify additional extra mount options;
-# mandatory options that will be set for the mount unit are uid, gid and size.
+
+# mandatory, non-empty options passed as env vars:
+#	unitdir		where to create units
+#	srcdir		source files to copy to tmpfs
+#	mountpoint	where the tmpfs will be mounted
+#	uid		user's UID
+#	gid		user's GID
+#	size		allocated size of tmpfs
+
+# optional env vars (may be unset):
+#	mountopts	extra mount flags for the tmpfs
+
 EOF
 exit 1;
 }
 
-if test $# -lt 5 -o $# -gt 6; then usage; fi;
 
-unitdir="$1";
-srcdir="$2";
-mountpoint="$3";
-uid="$4";
-gid="$5"
-size="$6";
-_extra="${7:-}";
+
+check() {
+	# all used cases of this are supposed to use ${var:?},
+	# so if we somehow get this far something is quite broken.
+	test -n "$1" || {
+		echo "# a required env var was blank" >&2;
+		exit 1;
+	}
+}
+
+check "${unitdir:?}";
+check "${srcdir:?}";
+check "${mountpoint:?}";
+check "${uid:?}";
+check "${gid:?}";
+check "${size:?}";
 
 extraopts="";
-if test -n "$_extra"; then {
-	extraopts=",$_extra";
+if test -n "${mountopts:-}"; then {
+	extraopts=",${mountopts}";
 }; fi;
+
+
 
 cd "$unitdir";
 escaped="$(systemd-escape -p "$mountpoint")";
