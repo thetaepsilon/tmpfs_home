@@ -21,6 +21,8 @@ usage() { cat >&2 << EOF
 
 # optional env vars (may be unset):
 #	mountopts	extra mount flags for the tmpfs
+#	asuser		copy files as specified uid, do not preserve source uid/gid,
+#			0/1 (default 0 for legacy compat)
 
 EOF
 exit 1;
@@ -33,8 +35,6 @@ die() {
 	exit 1;
 }
 
-
-
 check() {
 	# all used cases of this are supposed to use ${var:?},
 	# so if we somehow get this far something is quite broken.
@@ -42,6 +42,16 @@ check() {
 		die "a required env var was blank";
 	}
 }
+
+maybe_print() {
+	if test -n "$1"; then echo "$1"; fi;
+}
+
+
+
+
+
+
 
 check "${unitdir:?}";
 check "${srcdir:?}";
@@ -54,6 +64,23 @@ extraopts="";
 if test -n "${mountopts:-}"; then {
 	extraopts="${mountopts},";
 }; fi;
+
+asuser_userline="";
+asuser_rsyncopts="";
+if test -n "${asuser:-}"; then {
+	if test 1 == "${asuser}"; then {
+		asuser_userline="User=$uid";
+		asuser_rsyncopts=" --no-o --no-g";
+	}; else {
+		test 0 == "${asuser}" || {
+			die "invalid asuser value (must be 0 or 1):" "$asuser";
+		};
+	}; fi;
+}; fi;
+
+
+
+
 
 
 
@@ -68,7 +95,12 @@ RequiresMountsFor=$mountpoint $srcdir
 [Service]
 Type=oneshot
 RemainAfterExit=no
-ExecStart=/usr/bin/rsync -a "${srcdir}/" "${mountpoint}/"
+EOF
+
+	maybe_print "$asuser_userline";
+
+	cat << EOF
+ExecStart=/usr/bin/rsync -a${asuser_rsyncopts} "${srcdir}/" "${mountpoint}/"
 EOF
 
 }
@@ -107,6 +139,8 @@ After=${servicename}
 EOF
 
 }
+
+
 
 
 
