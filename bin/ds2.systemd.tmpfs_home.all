@@ -27,8 +27,10 @@ handle_user() {
 
 	_image="$_imageprefix/$2";
 
+	_asuser="$(fetch "$1/asuser" '0')";
+
 	# XXX: no mountopts implemented yet?
-	unitdir="$unit_gen_dir" srcdir="$_image" uid="$3" gid="$4" mountpoint="$5" size="$_size" ds2.systemd.tmpfs_home.single_entry;
+	unitdir="$unit_gen_dir" srcdir="$_image" uid="$3" gid="$4" mountpoint="$5" size="$_size" asuser="$_asuser" ds2.systemd.tmpfs_home.single_entry;
 }
 
 
